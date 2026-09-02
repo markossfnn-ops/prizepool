@@ -1,336 +1,431 @@
-const express = require("express");
-const http = require("http");
-const path = require("path");
-const cors = require("cors");
-const { Server } = require("socket.io");
+const loginScreen =
+    document.getElementById("loginScreen");
 
-const database = require("./database/database");
+const adminScreen =
+    document.getElementById("adminScreen");
 
-const app = express();
-const server = http.createServer(app);
+const loginForm =
+    document.getElementById("loginForm");
 
-const io = new Server(server, {
-    cors: {
-        origin: "*"
-    }
-});
+const passwordInput =
+    document.getElementById("password");
 
-app.use(cors());
-app.use(express.json());
+const loginMessage =
+    document.getElementById("loginMessage");
 
-// ==============================
-// ADMIN PASSWORD
-// ==============================
+const adminForm =
+    document.getElementById("adminForm");
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const logoutButton =
+    document.getElementById("logoutButton");
 
-if (!ADMIN_PASSWORD) {
-    console.warn(
-        "ADVERTENCIA: ADMIN_PASSWORD no está configurada."
-    );
-}
+const resetButton =
+    document.getElementById("resetButton");
 
-function requireAdmin(req, res, next) {
-    const authorization =
-        req.headers.authorization || "";
+const resetValue =
+    document.getElementById("resetValue");
 
-    if (!authorization.startsWith("Bearer ")) {
-        return res.status(401).json({
-            error: "No autorizado"
-        });
-    }
+const message =
+    document.getElementById("message");
 
-    const password =
-        authorization.substring(7);
 
-    if (
-        !ADMIN_PASSWORD ||
-        password !== 03661380
-    ) {
-        return res.status(401).json({
-            error: "Contraseña incorrecta"
-        });
-    }
+let adminPassword = null;
 
-    next();
-}
 
-// ==============================
-// ARCHIVOS PUBLIC
-// ==============================
+// ========================================
+// LOGIN
+// ========================================
 
-app.use(
-    express.static(
-        path.join(__dirname, "public")
-    )
-);
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
 
-// ==============================
-// ARCHIVOS ADMIN
-// ==============================
+        event.preventDefault();
 
-// Esto permite cargar:
-// /admin/admin.js
-// /admin/admin.css
-// /admin/admin.html
+        const password =
+            passwordInput.value;
 
-app.use(
-    "/admin",
-    express.static(
-        path.join(__dirname, "admin")
-    )
-);
-
-// ==============================
-// PAGINA ADMIN
-// ==============================
-
-app.get("/admin", (req, res) => {
-    res.sendFile(
-        path.join(
-            __dirname,
-            "admin",
-            "admin.html"
-        )
-    );
-});
-
-// ==============================
-// COMPROBAR CONTRASEÑA
-// ==============================
-
-app.get(
-    "/api/admin/test",
-    requireAdmin,
-    (req, res) => {
-        res.json({
-            success: true
-        });
-    }
-);
-
-// ==============================
-// ESTADISTICAS PUBLICAS
-// ==============================
-
-app.get(
-    "/api/stats",
-    async (req, res) => {
-        try {
-            const settings =
-                await database.getSettings();
-
-            res.json(settings);
-
-        } catch (error) {
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Error obteniendo los datos"
-            });
+        if (!password) {
+            return;
         }
-    }
-);
 
-// ==============================
-// SUMAR INVITACION
-// ==============================
+        loginMessage.textContent =
+            "Comprobando...";
 
-app.post(
-    "/api/invitation",
-    async (req, res) => {
-        try {
-            const settings =
-                await database.addInvitation();
+        loginMessage.style.color =
+            "#888";
 
-            io.emit(
-                "counterUpdate",
-                settings
-            );
-
-            res.json({
-                success: true,
-                data: settings
-            });
-
-        } catch (error) {
-            console.error(error);
-
-            res.status(500).json({
-                success: false,
-                error:
-                    "Error aumentando el contador"
-            });
-        }
-    }
-);
-
-// ==============================
-// GUARDAR CONFIGURACION
-// ==============================
-
-app.post(
-    "/api/admin/settings",
-    requireAdmin,
-    async (req, res) => {
         try {
 
-            const {
-                title,
-                currency,
-                value,
-                increment
-            } = req.body;
+            const response =
+                await fetch(
+                    "/api/admin/test",
+                    {
+                        method: "GET",
 
-            if (
-                !title ||
-                !currency ||
-                Number.isNaN(Number(value)) ||
-                Number.isNaN(Number(increment)) ||
-                Number(value) < 0 ||
-                Number(increment) < 1
-            ) {
-                return res.status(400).json({
-                    error: "Datos no válidos"
-                });
-            }
-
-            await database.updateSettings(
-                title,
-                currency,
-                Number(value),
-                Number(increment)
-            );
-
-            const settings =
-                await database.getSettings();
-
-            io.emit(
-                "counterUpdate",
-                settings
-            );
-
-            res.json({
-                success: true,
-                data: settings
-            });
-
-        } catch (error) {
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Error guardando configuración"
-            });
-        }
-    }
-);
-
-// ==============================
-// RESET DEL CONTADOR
-// ==============================
-
-app.post(
-    "/api/admin/reset",
-    requireAdmin,
-    async (req, res) => {
-        try {
-
-            const value =
-                Number(req.body.value);
-
-            if (
-                Number.isNaN(value) ||
-                value < 0
-            ) {
-                return res.status(400).json({
-                    error: "Valor no válido"
-                });
-            }
-
-            const settings =
-                await database.resetCounter(
-                    value
+                        headers: {
+                            "Authorization":
+                                `Bearer ${password}`
+                        }
+                    }
                 );
 
-            io.emit(
-                "counterUpdate",
-                settings
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                loginMessage.textContent =
+                    "❌ Contraseña incorrecta.";
+
+                loginMessage.style.color =
+                    "#ff4c4c";
+
+                return;
+            }
+
+            if (data.success !== true) {
+
+                loginMessage.textContent =
+                    "❌ No se pudo iniciar sesión.";
+
+                loginMessage.style.color =
+                    "#ff4c4c";
+
+                return;
+            }
+
+            // CONTRASEÑA CORRECTA
+
+            adminPassword =
+                password;
+
+            loginScreen.classList.add(
+                "hidden"
             );
 
-            res.json({
-                success: true,
-                data: settings
-            });
+            adminScreen.classList.remove(
+                "hidden"
+            );
+
+            loginMessage.textContent = "";
+
+            await loadSettings();
 
         } catch (error) {
-            console.error(error);
 
-            res.status(500).json({
-                error:
-                    "Error reseteando contador"
-            });
+            console.error(
+                "Error de login:",
+                error
+            );
+
+            loginMessage.textContent =
+                "❌ Error conectando con el servidor.";
+
+            loginMessage.style.color =
+                "#ff4c4c";
         }
     }
 );
 
-// ==============================
-// SOCKET.IO
-// ==============================
 
-io.on(
-    "connection",
-    async (socket) => {
+// ========================================
+// CARGAR CONFIGURACIÓN
+// ========================================
 
-        console.log(
-            "Cliente conectado:",
-            socket.id
+async function loadSettings() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/stats"
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                "Error obteniendo estadísticas."
+            );
+        }
+
+        const data =
+            await response.json();
+
+        document.getElementById(
+            "title"
+        ).value = data.title;
+
+        document.getElementById(
+            "currency"
+        ).value = data.currency;
+
+        document.getElementById(
+            "value"
+        ).value = data.value;
+
+        document.getElementById(
+            "increment"
+        ).value = data.increment;
+
+        resetValue.value =
+            data.value;
+
+    } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+            "❌ Error cargando configuración.",
+            true
         );
+    }
+}
+
+
+// ========================================
+// GUARDAR CONFIGURACIÓN
+// ========================================
+
+adminForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        const title =
+            document.getElementById(
+                "title"
+            ).value.trim();
+
+        const currency =
+            document.getElementById(
+                "currency"
+            ).value.trim();
+
+        const value =
+            Number(
+                document.getElementById(
+                    "value"
+                ).value
+            );
+
+        const increment =
+            Number(
+                document.getElementById(
+                    "increment"
+                ).value
+            );
 
         try {
 
-            const settings =
-                await database.getSettings();
+            const response =
+                await fetch(
+                    "/api/admin/settings",
+                    {
+                        method: "POST",
 
-            socket.emit(
-                "counterUpdate",
-                settings
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${adminPassword}`
+                        },
+
+                        body: JSON.stringify({
+                            title,
+                            currency,
+                            value,
+                            increment
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                if (
+                    response.status === 401
+                ) {
+                    logout();
+                    return;
+                }
+
+                throw new Error(
+                    data.error ||
+                    "Error guardando."
+                );
+            }
+
+            showMessage(
+                "✅ Cambios guardados correctamente."
             );
 
         } catch (error) {
+
             console.error(error);
+
+            showMessage(
+                "❌ " + error.message,
+                true
+            );
+        }
+    }
+);
+
+
+// ========================================
+// RESET CONTADOR
+// ========================================
+
+resetButton.addEventListener(
+    "click",
+    async () => {
+
+        const value =
+            Number(
+                resetValue.value
+            );
+
+        if (
+            Number.isNaN(value) ||
+            value < 0
+        ) {
+
+            showMessage(
+                "❌ Valor no válido.",
+                true
+            );
+
+            return;
         }
 
-        socket.on(
-            "disconnect",
-            () => {
+        const confirmed =
+            confirm(
+                `¿Seguro que quieres resetear el contador a ${value}?`
+            );
 
-                console.log(
-                    "Cliente desconectado:",
-                    socket.id
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/admin/reset",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${adminPassword}`
+                        },
+
+                        body: JSON.stringify({
+                            value
+                        })
+                    }
                 );
 
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                if (
+                    response.status === 401
+                ) {
+                    logout();
+                    return;
+                }
+
+                throw new Error(
+                    data.error ||
+                    "Error reseteando."
+                );
             }
-        );
+
+            document.getElementById(
+                "value"
+            ).value =
+                data.data.value;
+
+            resetValue.value =
+                data.data.value;
+
+            showMessage(
+                "✅ Contador reseteado correctamente."
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "❌ " + error.message,
+                true
+            );
+        }
     }
 );
 
-// ==============================
-// SERVIDOR
-// ==============================
 
-const PORT =
-    process.env.PORT || 3000;
+// ========================================
+// CERRAR SESIÓN
+// ========================================
 
-server.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-
-        console.log(
-            `Servidor iniciado en puerto ${PORT}`
-        );
-
-    }
+logoutButton.addEventListener(
+    "click",
+    logout
 );
+
+function logout() {
+
+    adminPassword = null;
+
+    passwordInput.value = "";
+
+    adminScreen.classList.add(
+        "hidden"
+    );
+
+    loginScreen.classList.remove(
+        "hidden"
+    );
+
+    loginMessage.textContent = "";
+
+    message.textContent = "";
+}
+
+
+// ========================================
+// MENSAJES
+// ========================================
+
+function showMessage(
+    text,
+    error = false
+) {
+
+    message.textContent =
+        text;
+
+    message.style.color =
+        error
+            ? "#ff4c4c"
+            : "#4cff88";
+
+    setTimeout(
+        () => {
+            message.textContent = "";
+        },
+        3000
+    );
+}

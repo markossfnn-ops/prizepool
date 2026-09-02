@@ -18,16 +18,15 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-/* =========================
-   ADMIN AUTH
-========================= */
+// ========================================
+// CONTRASEÑA DEL PANEL DE ADMINISTRACIÓN
+// ========================================
 
-const ADMIN_PASSWORD =
-    process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 if (!ADMIN_PASSWORD) {
     console.warn(
-        "ADVERTENCIA: ADMIN_PASSWORD no está configurada."
+        "ADVERTENCIA: ADMIN_PASSWORD no está configurada en Render."
     );
 }
 
@@ -46,7 +45,7 @@ function requireAdmin(req, res, next) {
 
     if (
         !ADMIN_PASSWORD ||
-        password !== 03661380
+        password !== ADMIN_PASSWORD
     ) {
         return res.status(401).json({
             error: "Contraseña incorrecta"
@@ -56,9 +55,9 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-/* =========================
-   PUBLIC WEBSITE
-========================= */
+// ========================================
+// ARCHIVOS DE LA WEB PRINCIPAL
+// ========================================
 
 app.use(
     express.static(
@@ -66,9 +65,20 @@ app.use(
     )
 );
 
-/* =========================
-   ADMIN PAGE
-========================= */
+// ========================================
+// ARCHIVOS DEL PANEL ADMIN
+// ========================================
+
+app.use(
+    "/admin",
+    express.static(
+        path.join(__dirname, "admin")
+    )
+);
+
+// ========================================
+// PÁGINA DE ADMIN
+// ========================================
 
 app.get("/admin", (req, res) => {
     res.sendFile(
@@ -80,9 +90,9 @@ app.get("/admin", (req, res) => {
     );
 });
 
-/* =========================
-   ADMIN PASSWORD TEST
-========================= */
+// ========================================
+// COMPROBAR CONTRASEÑA
+// ========================================
 
 app.get(
     "/api/admin/test",
@@ -94,9 +104,9 @@ app.get(
     }
 );
 
-/* =========================
-   PUBLIC STATS
-========================= */
+// ========================================
+// ESTADÍSTICAS
+// ========================================
 
 app.get(
     "/api/stats",
@@ -118,9 +128,9 @@ app.get(
     }
 );
 
-/* =========================
-   INVITATION
-========================= */
+// ========================================
+// SUMAR INVITACIÓN
+// ========================================
 
 app.post(
     "/api/invitation",
@@ -151,16 +161,15 @@ app.post(
     }
 );
 
-/* =========================
-   ADMIN SETTINGS
-========================= */
+// ========================================
+// GUARDAR CONFIGURACIÓN
+// ========================================
 
 app.post(
     "/api/admin/settings",
     requireAdmin,
     async (req, res) => {
         try {
-
             const {
                 title,
                 currency,
@@ -212,16 +221,15 @@ app.post(
     }
 );
 
-/* =========================
-   ADMIN RESET
-========================= */
+// ========================================
+// RESET CONTADOR
+// ========================================
 
 app.post(
     "/api/admin/reset",
     requireAdmin,
     async (req, res) => {
         try {
-
             const value =
                 Number(req.body.value);
 
@@ -260,9 +268,9 @@ app.post(
     }
 );
 
-/* =========================
-   SOCKET.IO
-========================= */
+// ========================================
+// SOCKET.IO
+// ========================================
 
 io.on(
     "connection",
@@ -274,7 +282,6 @@ io.on(
         );
 
         try {
-
             const settings =
                 await database.getSettings();
 
@@ -290,20 +297,18 @@ io.on(
         socket.on(
             "disconnect",
             () => {
-
                 console.log(
                     "Cliente desconectado:",
                     socket.id
                 );
-
             }
         );
     }
 );
 
-/* =========================
-   SERVER
-========================= */
+// ========================================
+// SERVIDOR
+// ========================================
 
 const PORT =
     process.env.PORT || 3000;
@@ -312,10 +317,8 @@ server.listen(
     PORT,
     "0.0.0.0",
     () => {
-
         console.log(
             `Servidor iniciado en puerto ${PORT}`
         );
-
     }
 );
