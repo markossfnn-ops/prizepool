@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Prize Pool</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1 id="title">
+            Prize Pool
+        </h1>
+
+        <div class="counter" id="counter">
+
+            <span id="value">
+                1.000.000
+            </span>
+
+        </div>
+
+        <div
+            class="currency"
+            id="currency"
+        >
+            V-Bucks
+        </div>
+
+        <div class="info">
+
+            Cada invitación
+
+            <strong>
+                +<span id="increment">500</span>
+            </strong>
+
+        </div>
+
+        <div class="invitations">
+
+            Invitaciones:
+
+            <strong id="invitations">
+                0
+            </strong>
+
+        </div>
+
+    </main>
+
+    <div id="notification"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+
+</body>
+
+</html>

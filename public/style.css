@@ -1,0 +1,158 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #202020 0%,
+            #080808 70%
+        );
+
+    color: white;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+.container {
+
+    width: 90%;
+
+    max-width: 1200px;
+
+    text-align: center;
+}
+
+h1 {
+
+    font-size:
+        clamp(40px, 7vw, 90px);
+
+    font-weight: 800;
+
+    margin-bottom: 25px;
+}
+
+.counter {
+
+    font-size:
+        clamp(70px, 13vw, 180px);
+
+    font-weight: 900;
+
+    letter-spacing: -5px;
+
+    transition:
+        transform 0.25s ease;
+}
+
+.counter.bump {
+
+    animation:
+        bump 0.5s ease;
+}
+
+.currency {
+
+    font-size:
+        clamp(25px, 4vw, 50px);
+
+    font-weight: 700;
+
+    margin-top: 5px;
+}
+
+.info {
+
+    margin-top: 45px;
+
+    font-size: 24px;
+
+    color: #bdbdbd;
+}
+
+.info strong {
+
+    color: #4cff88;
+
+    margin-left: 8px;
+}
+
+.invitations {
+
+    margin-top: 20px;
+
+    font-size: 18px;
+
+    color: #888;
+}
+
+.invitations strong {
+
+    color: white;
+}
+
+#notification {
+
+    position: fixed;
+
+    left: 50%;
+
+    bottom: 40px;
+
+    transform:
+        translateX(-50%)
+        translateY(30px);
+
+    opacity: 0;
+
+    padding: 15px 25px;
+
+    border-radius: 12px;
+
+    background: #4cff88;
+
+    color: #07140b;
+
+    font-weight: 800;
+
+    transition: 0.3s;
+}
+
+#notification.show {
+
+    opacity: 1;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+@keyframes bump {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
