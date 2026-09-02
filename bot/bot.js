@@ -3,8 +3,33 @@ const {
     GatewayIntentBits
 } = require("discord.js");
 
-const database = require("../database/database");
-const config = require("../config.json");
+const database =
+    require("../database/database");
+
+
+const TOKEN =
+    process.env.DISCORD_TOKEN;
+
+const GUILD_ID =
+    process.env.GUILD_ID;
+
+
+if (!TOKEN) {
+    console.error(
+        "ERROR: Falta DISCORD_TOKEN"
+    );
+
+    process.exit(1);
+}
+
+if (!GUILD_ID) {
+    console.error(
+        "ERROR: Falta GUILD_ID"
+    );
+
+    process.exit(1);
+}
+
 
 const client = new Client({
     intents: [
@@ -14,23 +39,27 @@ const client = new Client({
 });
 
 
-// Invitaciones conocidas
 const invitesCache = new Map();
 
 
 // ==============================
-// GUARDAR INVITACIONES
+// CACHE INVITES
 // ==============================
 
 async function cacheInvites(guild) {
 
     try {
 
-        const invites = await guild.invites.fetch();
+        const invites =
+            await guild.invites.fetch();
 
-        const inviteMap = new Map();
+        const inviteMap =
+            new Map();
 
-        for (const invite of invites.values()) {
+        for (
+            const invite
+            of invites.values()
+        ) {
 
             inviteMap.set(
                 invite.code,
@@ -61,39 +90,44 @@ async function cacheInvites(guild) {
 
 
 // ==============================
-// BOT LISTO
+// BOT READY
 // ==============================
 
-client.once("clientReady", async () => {
+client.once(
+    "clientReady",
+    async () => {
 
-    console.log(
-        `Bot conectado como ${client.user.tag}`
-    );
-
-    const guild =
-        client.guilds.cache.get(config.guildId);
-
-    if (!guild) {
-
-        console.error(
-            "No encuentro el servidor configurado."
+        console.log(
+            `Bot conectado como ${client.user.tag}`
         );
 
-        return;
+        const guild =
+            client.guilds.cache.get(
+                GUILD_ID
+            );
+
+        if (!guild) {
+
+            console.error(
+                "No encuentro el servidor configurado."
+            );
+
+            return;
+
+        }
+
+        console.log(
+            `Servidor configurado: ${guild.name}`
+        );
+
+        await cacheInvites(guild);
 
     }
-
-    console.log(
-        `Servidor configurado: ${guild.name}`
-    );
-
-    await cacheInvites(guild);
-
-});
+);
 
 
 // ==============================
-// NUEVO MIEMBRO
+// NEW MEMBER
 // ==============================
 
 client.on(
@@ -104,7 +138,7 @@ client.on(
 
             if (
                 member.guild.id !==
-                config.guildId
+                GUILD_ID
             ) {
                 return;
             }
@@ -114,10 +148,8 @@ client.on(
             );
 
 
-            // Invitaciones actuales
             const invites =
                 await member.guild.invites.fetch();
-
 
             const oldInvites =
                 invitesCache.get(
@@ -128,8 +160,10 @@ client.on(
             let usedInvite = null;
 
 
-            // Buscar la invitación cuyo contador aumentó
-            for (const invite of invites.values()) {
+            for (
+                const invite
+                of invites.values()
+            ) {
 
                 const oldUses =
                     oldInvites.get(
@@ -140,9 +174,13 @@ client.on(
                     invite.uses || 0;
 
 
-                if (newUses > oldUses) {
+                if (
+                    newUses >
+                    oldUses
+                ) {
 
-                    usedInvite = invite;
+                    usedInvite =
+                        invite;
 
                     break;
 
@@ -151,7 +189,6 @@ client.on(
             }
 
 
-            // Actualizar caché
             await cacheInvites(
                 member.guild
             );
@@ -173,7 +210,9 @@ client.on(
             );
 
 
-            if (usedInvite.inviter) {
+            if (
+                usedInvite.inviter
+            ) {
 
                 console.log(
                     `Invitado por: ${usedInvite.inviter.tag}`
@@ -181,10 +220,6 @@ client.on(
 
             }
 
-
-            // ==============================
-            // SUMAR AL PRIZE POOL
-            // ==============================
 
             const settings =
                 await database.addInvitation();
@@ -211,8 +246,4 @@ client.on(
 );
 
 
-// ==============================
-// LOGIN
-// ==============================
-
-client.login(config.token);
+client.login(TOKEN);

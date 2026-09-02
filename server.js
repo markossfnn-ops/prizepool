@@ -5,7 +5,6 @@ const cors = require("cors");
 const { Server } = require("socket.io");
 
 const database = require("./database/database");
-const config = require("./config.json");
 
 const app = express();
 const server = http.createServer(app);
@@ -16,27 +15,20 @@ const io = new Server(server, {
     }
 });
 
-
-// ==============================
-// MIDDLEWARE
-// ==============================
-
 app.use(cors());
 app.use(express.json());
 
 
 // ==============================
-// ARCHIVOS DEL FRONTEND
+// FRONTEND
 // ==============================
 
-// Página principal
 app.use(
     express.static(
         path.join(__dirname, "public")
     )
 );
 
-// Panel de administración
 app.use(
     "/admin",
     express.static(
@@ -46,11 +38,10 @@ app.use(
 
 
 // ==============================
-// PÁGINA ADMIN
+// ADMIN PAGE
 // ==============================
 
 app.get("/admin", (req, res) => {
-
     res.sendFile(
         path.join(
             __dirname,
@@ -58,16 +49,14 @@ app.get("/admin", (req, res) => {
             "admin.html"
         )
     );
-
 });
 
 
 // ==============================
-// OBTENER DATOS
+// STATS
 // ==============================
 
 app.get("/api/stats", async (req, res) => {
-
     try {
 
         const settings =
@@ -84,16 +73,14 @@ app.get("/api/stats", async (req, res) => {
         });
 
     }
-
 });
 
 
 // ==============================
-// SUMAR INVITACIÓN
+// INVITATION
 // ==============================
 
 app.post("/api/invitation", async (req, res) => {
-
     try {
 
         const settings =
@@ -119,12 +106,11 @@ app.post("/api/invitation", async (req, res) => {
         });
 
     }
-
 });
 
 
 // ==============================
-// ADMIN - CAMBIAR CONFIGURACIÓN
+// ADMIN SETTINGS
 // ==============================
 
 app.post(
@@ -139,7 +125,6 @@ app.post(
                 value,
                 increment
             } = req.body;
-
 
             if (
                 !title ||
@@ -156,7 +141,6 @@ app.post(
 
             }
 
-
             await database.updateSettings(
                 title,
                 currency,
@@ -164,16 +148,13 @@ app.post(
                 Number(increment)
             );
 
-
             const settings =
                 await database.getSettings();
-
 
             io.emit(
                 "counterUpdate",
                 settings
             );
-
 
             res.json({
                 success: true,
@@ -196,7 +177,7 @@ app.post(
 
 
 // ==============================
-// ADMIN - RESET
+// ADMIN RESET
 // ==============================
 
 app.post(
@@ -207,7 +188,6 @@ app.post(
 
             const value =
                 Number(req.body.value);
-
 
             if (
                 Number.isNaN(value) ||
@@ -220,16 +200,13 @@ app.post(
 
             }
 
-
             const settings =
                 await database.resetCounter(value);
-
 
             io.emit(
                 "counterUpdate",
                 settings
             );
-
 
             res.json({
                 success: true,
@@ -264,12 +241,10 @@ io.on(
             socket.id
         );
 
-
         try {
 
             const settings =
                 await database.getSettings();
-
 
             socket.emit(
                 "counterUpdate",
@@ -281,7 +256,6 @@ io.on(
             console.error(error);
 
         }
-
 
         socket.on(
             "disconnect",
@@ -300,19 +274,19 @@ io.on(
 
 
 // ==============================
-// INICIAR SERVIDOR
+// START SERVER
 // ==============================
 
+const PORT =
+    process.env.PORT || 3000;
+
 server.listen(
-    config.port,
+    PORT,
+    "0.0.0.0",
     () => {
 
         console.log(
-            `Servidor iniciado en http://localhost:${config.port}`
-        );
-
-        console.log(
-            `Panel admin: http://localhost:${config.port}/admin`
+            `Servidor iniciado en puerto ${PORT}`
         );
 
     }
