@@ -3,6 +3,7 @@ const http = require("http");
 const path = require("path");
 const cors = require("cors");
 const { Server } = require("socket.io");
+const { spawn } = require("child_process");
 
 const database = require("./database/database");
 
@@ -305,6 +306,40 @@ io.on(
         );
     }
 );
+
+// ========================================
+// INICIAR BOT DE DISCORD
+// ========================================
+
+console.log("Iniciando bot de Discord...");
+
+const bot = spawn(
+    process.execPath,
+    [
+        path.join(
+            __dirname,
+            "bot",
+            "bot.js"
+        )
+    ],
+    {
+        env: process.env,
+        stdio: "inherit"
+    }
+);
+
+bot.on("error", (error) => {
+    console.error(
+        "Error iniciando el bot:",
+        error
+    );
+});
+
+bot.on("exit", (code, signal) => {
+    console.log(
+        `Bot detenido. Código: ${code}, señal: ${signal || "ninguna"}`
+    );
+});
 
 // ========================================
 // SERVIDOR
