@@ -6,7 +6,7 @@
 
     <title>Admin - Prize Pool</title>
 
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="/admin/admin.css">
 </head>
 
 <body>
@@ -52,12 +52,17 @@
 
             <div>
                 <h1>Panel de administración</h1>
+
                 <p class="subtitle">
                     Configura tu Prize Pool
                 </p>
             </div>
 
-            <button id="logoutButton" class="logout">
+            <button
+                id="logoutButton"
+                class="logout"
+                type="button"
+            >
                 Cerrar sesión
             </button>
 
@@ -66,7 +71,7 @@
 
         <form id="adminForm">
 
-            <label>
+            <label for="title">
                 Nombre del contador
             </label>
 
@@ -78,7 +83,7 @@
             >
 
 
-            <label>
+            <label for="currency">
                 Moneda / texto
             </label>
 
@@ -90,7 +95,7 @@
             >
 
 
-            <label>
+            <label for="value">
                 Valor actual
             </label>
 
@@ -102,7 +107,7 @@
             >
 
 
-            <label>
+            <label for="increment">
                 Cantidad por invitación
             </label>
 
@@ -141,6 +146,7 @@
         <button
             id="resetButton"
             class="reset"
+            type="button"
         >
             Resetear contador
         </button>
@@ -151,7 +157,7 @@
     </div>
 
 
-    <script src="admin.js"></script>
+    <script src="/admin/admin.js"></script>
 
 </body>
 </html>
