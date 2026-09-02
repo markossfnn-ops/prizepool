@@ -1,35 +1,126 @@
-const form = document.getElementById("adminForm");
+const loginScreen =
+    document.getElementById("loginScreen");
 
-const titleInput =
-    document.getElementById("title");
+const adminScreen =
+    document.getElementById("adminScreen");
 
-const currencyInput =
-    document.getElementById("currency");
+const loginForm =
+    document.getElementById("loginForm");
 
-const valueInput =
-    document.getElementById("value");
+const passwordInput =
+    document.getElementById("password");
 
-const incrementInput =
-    document.getElementById("increment");
+const loginMessage =
+    document.getElementById("loginMessage");
+
+const adminForm =
+    document.getElementById("adminForm");
+
+const logoutButton =
+    document.getElementById("logoutButton");
 
 const resetButton =
     document.getElementById("resetButton");
 
+const resetValue =
+    document.getElementById("resetValue");
+
 const message =
     document.getElementById("message");
 
+let adminPassword = null;
 
-function showMessage(text, success = true) {
 
-    message.textContent = text;
+/* =========================
+   LOGIN
+========================= */
 
-    message.style.color =
-        success
-            ? "#4cff88"
-            : "#ff4c4c";
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
 
-}
+        event.preventDefault();
 
+        const password =
+            passwordInput.value.trim();
+
+        if (!password) {
+            return;
+        }
+
+        loginMessage.textContent =
+            "Comprobando...";
+
+        loginMessage.style.color =
+            "#888";
+
+        try {
+
+            const response =
+                await fetch("/api/stats");
+
+            if (!response.ok) {
+                throw new Error(
+                    "No se pudo conectar con el servidor."
+                );
+            }
+
+            /*
+                Hacemos una petición protegida
+                para comprobar la contraseña.
+            */
+
+            const testResponse =
+                await fetch(
+                    "/api/admin/test",
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${password}`
+                        }
+                    }
+                );
+
+            if (!testResponse.ok) {
+
+                loginMessage.textContent =
+                    "❌ Contraseña incorrecta.";
+
+                loginMessage.style.color =
+                    "#ff4c4c";
+
+                return;
+            }
+
+            adminPassword = password;
+
+            loginScreen.classList.add(
+                "hidden"
+            );
+
+            adminScreen.classList.remove(
+                "hidden"
+            );
+
+            loadSettings();
+
+        } catch (error) {
+
+            console.error(error);
+
+            loginMessage.textContent =
+                "❌ Error conectando con el servidor.";
+
+            loginMessage.style.color =
+                "#ff4c4c";
+        }
+    }
+);
+
+
+/* =========================
+   CARGAR CONFIGURACIÓN
+========================= */
 
 async function loadSettings() {
 
@@ -41,53 +132,58 @@ async function loadSettings() {
         const data =
             await response.json();
 
-        titleInput.value =
+        document.getElementById("title").value =
             data.title;
 
-        currencyInput.value =
+        document.getElementById("currency").value =
             data.currency;
 
-        valueInput.value =
+        document.getElementById("value").value =
             data.value;
 
-        incrementInput.value =
+        document.getElementById("increment").value =
             data.increment;
+
+        resetValue.value =
+            data.value;
 
     } catch (error) {
 
         console.error(error);
 
         showMessage(
-            "No se pudieron cargar los datos",
-            false
+            "❌ Error cargando configuración.",
+            true
         );
-
     }
 }
 
 
-form.addEventListener(
+/* =========================
+   GUARDAR
+========================= */
+
+adminForm.addEventListener(
     "submit",
     async (event) => {
 
         event.preventDefault();
 
-        const data = {
+        const title =
+            document.getElementById("title").value;
 
-            title: titleInput.value,
+        const currency =
+            document.getElementById("currency").value;
 
-            currency: currencyInput.value,
+        const value =
+            Number(
+                document.getElementById("value").value
+            );
 
-            value: Number(
-                valueInput.value
-            ),
-
-            increment: Number(
-                incrementInput.value
-            )
-
-        };
-
+        const increment =
+            Number(
+                document.getElementById("increment").value
+            );
 
         try {
 
@@ -99,33 +195,39 @@ form.addEventListener(
 
                         headers: {
                             "Content-Type":
-                                "application/json"
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${adminPassword}`
                         },
 
-                        body:
-                            JSON.stringify(data)
+                        body: JSON.stringify({
+                            title,
+                            currency,
+                            value,
+                            increment
+                        })
                     }
                 );
 
-
-            const result =
+            const data =
                 await response.json();
-
 
             if (!response.ok) {
 
-                showMessage(
-                    result.error ||
-                    "Error guardando cambios",
-                    false
-                );
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
 
-                return;
+                throw new Error(
+                    data.error ||
+                    "Error guardando."
+                );
             }
 
-
             showMessage(
-                "Cambios guardados correctamente"
+                "✅ Cambios guardados correctamente."
             );
 
         } catch (error) {
@@ -133,50 +235,45 @@ form.addEventListener(
             console.error(error);
 
             showMessage(
-                "Error de conexión",
-                false
+                "❌ " + error.message,
+                true
             );
-
         }
-
     }
 );
 
+
+/* =========================
+   RESET
+========================= */
 
 resetButton.addEventListener(
     "click",
     async () => {
 
-        const confirmed =
-            confirm(
-                "¿Seguro que quieres resetear el contador?"
+        const value =
+            Number(resetValue.value);
+
+        if (
+            Number.isNaN(value) ||
+            value < 0
+        ) {
+            showMessage(
+                "❌ Valor no válido.",
+                true
             );
 
+            return;
+        }
+
+        const confirmed =
+            confirm(
+                `¿Seguro que quieres resetear el contador a ${value}?`
+            );
 
         if (!confirmed) {
             return;
         }
-
-
-        const value =
-            Number(
-                prompt(
-                    "¿A qué valor quieres resetearlo?",
-                    "0"
-                )
-            );
-
-
-        if (Number.isNaN(value) || value < 0) {
-
-            showMessage(
-                "Valor no válido",
-                false
-            );
-
-            return;
-        }
-
 
         try {
 
@@ -188,38 +285,40 @@ resetButton.addEventListener(
 
                         headers: {
                             "Content-Type":
-                                "application/json"
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${adminPassword}`
                         },
 
-                        body:
-                            JSON.stringify({
-                                value
-                            })
+                        body: JSON.stringify({
+                            value
+                        })
                     }
                 );
 
-
-            const result =
+            const data =
                 await response.json();
-
 
             if (!response.ok) {
 
-                showMessage(
-                    result.error ||
-                    "Error reseteando",
-                    false
-                );
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
 
-                return;
+                throw new Error(
+                    data.error ||
+                    "Error reseteando."
+                );
             }
 
-
-            valueInput.value =
-                result.data.value;
+            document.getElementById(
+                "value"
+            ).value = data.data.value;
 
             showMessage(
-                "Contador reseteado correctamente"
+                "✅ Contador reseteado correctamente."
             );
 
         } catch (error) {
@@ -227,14 +326,60 @@ resetButton.addEventListener(
             console.error(error);
 
             showMessage(
-                "Error de conexión",
-                false
+                "❌ " + error.message,
+                true
             );
-
         }
-
     }
 );
 
 
-loadSettings();
+/* =========================
+   LOGOUT
+========================= */
+
+logoutButton.addEventListener(
+    "click",
+    logout
+);
+
+function logout() {
+
+    adminPassword = null;
+
+    passwordInput.value = "";
+
+    adminScreen.classList.add(
+        "hidden"
+    );
+
+    loginScreen.classList.remove(
+        "hidden"
+    );
+
+    loginMessage.textContent = "";
+
+    message.textContent = "";
+}
+
+
+/* =========================
+   MENSAJES
+========================= */
+
+function showMessage(
+    text,
+    error = false
+) {
+
+    message.textContent = text;
+
+    message.style.color =
+        error
+            ? "#ff4c4c"
+            : "#4cff88";
+
+    setTimeout(() => {
+        message.textContent = "";
+    }, 3000);
+}

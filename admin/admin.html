@@ -1,13 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Admin - Prize Pool</title>
 
@@ -16,13 +11,58 @@
 
 <body>
 
-    <div class="panel">
+    <!-- LOGIN -->
 
-        <h1>Panel de administración</h1>
+    <div id="loginScreen" class="login-container">
 
-        <p class="subtitle">
-            Configura tu Prize Pool
-        </p>
+        <div class="login-box">
+
+            <h1>🔒 Administración</h1>
+
+            <p>Introduce la contraseña para continuar.</p>
+
+            <form id="loginForm">
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Contraseña"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit">
+                    Entrar
+                </button>
+
+            </form>
+
+            <div id="loginMessage"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PANEL ADMIN -->
+
+    <div id="adminScreen" class="panel hidden">
+
+        <div class="header">
+
+            <div>
+                <h1>Panel de administración</h1>
+                <p class="subtitle">
+                    Configura tu Prize Pool
+                </p>
+            </div>
+
+            <button id="logoutButton" class="logout">
+                Cerrar sesión
+            </button>
+
+        </div>
+
 
         <form id="adminForm">
 
@@ -37,6 +77,7 @@
                 required
             >
 
+
             <label>
                 Moneda / texto
             </label>
@@ -47,6 +88,7 @@
                 placeholder="V-Bucks"
                 required
             >
+
 
             <label>
                 Valor actual
@@ -59,6 +101,7 @@
                 required
             >
 
+
             <label>
                 Cantidad por invitación
             </label>
@@ -70,13 +113,30 @@
                 required
             >
 
+
             <button type="submit">
                 Guardar cambios
             </button>
 
         </form>
 
+
         <div class="divider"></div>
+
+
+        <h2>Resetear contador</h2>
+
+        <p class="reset-description">
+            Establece el Prize Pool en un valor concreto
+            y pone las invitaciones a 0.
+        </p>
+
+        <input
+            type="number"
+            id="resetValue"
+            min="0"
+            value="1000"
+        >
 
         <button
             id="resetButton"
@@ -85,12 +145,13 @@
             Resetear contador
         </button>
 
+
         <div id="message"></div>
 
     </div>
 
+
     <script src="admin.js"></script>
 
 </body>
-
 </html>

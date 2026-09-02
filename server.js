@@ -18,10 +18,47 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
+/* =========================
+   ADMIN AUTH
+========================= */
 
-// ==============================
-// FRONTEND
-// ==============================
+const ADMIN_PASSWORD =
+    process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_PASSWORD) {
+    console.warn(
+        "ADVERTENCIA: ADMIN_PASSWORD no está configurada."
+    );
+}
+
+function requireAdmin(req, res, next) {
+    const authorization =
+        req.headers.authorization || "";
+
+    if (!authorization.startsWith("Bearer ")) {
+        return res.status(401).json({
+            error: "No autorizado"
+        });
+    }
+
+    const password =
+        authorization.substring(7);
+
+    if (
+        !ADMIN_PASSWORD ||
+        password !== 03661380
+    ) {
+        return res.status(401).json({
+            error: "Contraseña incorrecta"
+        });
+    }
+
+    next();
+}
+
+/* =========================
+   PUBLIC WEBSITE
+========================= */
 
 app.use(
     express.static(
@@ -29,17 +66,9 @@ app.use(
     )
 );
 
-app.use(
-    "/admin",
-    express.static(
-        path.join(__dirname, "admin")
-    )
-);
-
-
-// ==============================
-// ADMIN PAGE
-// ==============================
+/* =========================
+   ADMIN PAGE
+========================= */
 
 app.get("/admin", (req, res) => {
     res.sendFile(
@@ -51,72 +80,85 @@ app.get("/admin", (req, res) => {
     );
 });
 
+/* =========================
+   ADMIN PASSWORD TEST
+========================= */
 
-// ==============================
-// STATS
-// ==============================
-
-app.get("/api/stats", async (req, res) => {
-    try {
-
-        const settings =
-            await database.getSettings();
-
-        res.json(settings);
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            error: "Error obteniendo los datos"
-        });
-
-    }
-});
-
-
-// ==============================
-// INVITATION
-// ==============================
-
-app.post("/api/invitation", async (req, res) => {
-    try {
-
-        const settings =
-            await database.addInvitation();
-
-        io.emit(
-            "counterUpdate",
-            settings
-        );
-
+app.get(
+    "/api/admin/test",
+    requireAdmin,
+    (req, res) => {
         res.json({
-            success: true,
-            data: settings
+            success: true
         });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            success: false,
-            error: "Error aumentando el contador"
-        });
-
     }
-});
+);
 
+/* =========================
+   PUBLIC STATS
+========================= */
 
-// ==============================
-// ADMIN SETTINGS
-// ==============================
+app.get(
+    "/api/stats",
+    async (req, res) => {
+        try {
+            const settings =
+                await database.getSettings();
+
+            res.json(settings);
+
+        } catch (error) {
+            console.error(error);
+
+            res.status(500).json({
+                error:
+                    "Error obteniendo los datos"
+            });
+        }
+    }
+);
+
+/* =========================
+   INVITATION
+========================= */
+
+app.post(
+    "/api/invitation",
+    async (req, res) => {
+        try {
+            const settings =
+                await database.addInvitation();
+
+            io.emit(
+                "counterUpdate",
+                settings
+            );
+
+            res.json({
+                success: true,
+                data: settings
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            res.status(500).json({
+                success: false,
+                error:
+                    "Error aumentando el contador"
+            });
+        }
+    }
+);
+
+/* =========================
+   ADMIN SETTINGS
+========================= */
 
 app.post(
     "/api/admin/settings",
+    requireAdmin,
     async (req, res) => {
-
         try {
 
             const {
@@ -134,11 +176,9 @@ app.post(
                 Number(value) < 0 ||
                 Number(increment) < 1
             ) {
-
                 return res.status(400).json({
                     error: "Datos no válidos"
                 });
-
             }
 
             await database.updateSettings(
@@ -162,28 +202,24 @@ app.post(
             });
 
         } catch (error) {
-
             console.error(error);
 
             res.status(500).json({
                 error:
                     "Error guardando configuración"
             });
-
         }
-
     }
 );
 
-
-// ==============================
-// ADMIN RESET
-// ==============================
+/* =========================
+   ADMIN RESET
+========================= */
 
 app.post(
     "/api/admin/reset",
+    requireAdmin,
     async (req, res) => {
-
         try {
 
             const value =
@@ -193,15 +229,15 @@ app.post(
                 Number.isNaN(value) ||
                 value < 0
             ) {
-
                 return res.status(400).json({
                     error: "Valor no válido"
                 });
-
             }
 
             const settings =
-                await database.resetCounter(value);
+                await database.resetCounter(
+                    value
+                );
 
             io.emit(
                 "counterUpdate",
@@ -214,23 +250,19 @@ app.post(
             });
 
         } catch (error) {
-
             console.error(error);
 
             res.status(500).json({
                 error:
                     "Error reseteando contador"
             });
-
         }
-
     }
 );
 
-
-// ==============================
-// SOCKET.IO
-// ==============================
+/* =========================
+   SOCKET.IO
+========================= */
 
 io.on(
     "connection",
@@ -252,9 +284,7 @@ io.on(
             );
 
         } catch (error) {
-
             console.error(error);
-
         }
 
         socket.on(
@@ -268,14 +298,12 @@ io.on(
 
             }
         );
-
     }
 );
 
-
-// ==============================
-// START SERVER
-// ==============================
+/* =========================
+   SERVER
+========================= */
 
 const PORT =
     process.env.PORT || 3000;
